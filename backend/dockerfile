@@ -1,38 +1,53 @@
-# Usamos la imagen oficial de PHP con CLI para ejecutar artisan serve
-FROM php:8.2-cli
+FROM php:8.2-fpm-bookworm AS vendor
 
-# Establecemos el directorio de trabajo dentro del contenedor
 WORKDIR /var/www/html
 
-# Instalamos las extensiones necesarias de PHP para Laravel y PostgreSQL
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    libpq-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_pgsql zip bcmath
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git \
+        libpq-dev \
+        unzip \
+    && docker-php-ext-install pdo_pgsql \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalamos Composer globalmente
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-scripts
 
-# Copiamos los archivos del proyecto Laravel al contenedor
-COPY . /var/www/html
+FROM php:8.2-fpm-bookworm AS runtime
 
-# Damos permisos a la carpeta de almacenamiento y bootstrap
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
+WORKDIR /var/www/html
 
-# Instalamos las dependencias de Laravel con Composer
-RUN composer install --no-dev --optimize-autoloader
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        nginx \
+        supervisor \
+        libpq-dev \
+    && docker-php-ext-install pdo_pgsql \
+    && apt-mark manual libpq5 \
+    && apt-get purge -y --auto-remove libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /run/php /run/nginx /var/log/supervisor
 
-# Exponemos el puerto 8000 para el servidor embebido de Laravel
-EXPOSE 8000
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+COPY --chown=www-data:www-data . .
+COPY --from=vendor --chown=www-data:www-data /var/www/html/vendor ./vendor
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Comando por defecto para iniciar el servidor de Laravel
-# CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
+RUN composer dump-autoload --no-dev --optimize --no-interaction \
+    && rm -f /usr/bin/composer \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R ug+rwX storage bootstrap/cache
+
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+ENV LOG_CHANNEL=stderr
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD php -r "exit(@file_get_contents('http://127.0.0.1:8080/health') === false ? 1 : 0);"
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
