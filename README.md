@@ -99,12 +99,6 @@ docker compose down -v
 - Si el frontend no carga notas, verifica que `NUXT_PUBLIC_API_BASE=/api` y accede por el gateway, no por el puerto interno del frontend.
 - Si Compose no espera la migracion, ejecuta `docker compose run --rm migrate` antes de `docker compose up`.
 
-## Consideraciones para Kubernetes
+## Despliegue en AWS Learner Lab
 
-No se incluyen manifiestos de Kubernetes, Terraform ni configuracion de AWS. Para desplegar despues:
-
-- Publica un unico Ingress para el dominio de la aplicacion.
-- Enruta `/` al servicio del frontend y `/api` al servicio del backend.
-- Inyecta configuracion con variables de entorno o secretos del cluster.
-- Ejecuta migraciones como Job separado antes de iniciar o actualizar replicas del backend.
-- Configura `TRUSTED_PROXIES` con los rangos o direcciones del proxy/Ingress confiable.
+La guia manual y acotada para AWS Learner Lab esta en [DEPLOY_LEARNER_LAB.md](DEPLOY_LEARNER_LAB.md). Para publicar la app detras de un ALB, siga [DEPLOY_LEARNER_LAB_PARTE_2.md](DEPLOY_LEARNER_LAB_PARTE_2.md). La aplicacion se despliega con un unico manifiesto en `k8s/app.yaml`.
