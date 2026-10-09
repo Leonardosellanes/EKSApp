@@ -96,9 +96,9 @@ docker compose down -v
 
 - Si Laravel indica que falta `APP_KEY`, revisa que exista `.env` y que `APP_KEY` tenga un valor valido.
 - Si `/ready` responde `503`, PostgreSQL no esta disponible o las variables `DB_*` no coinciden.
-- Si el frontend no carga notas, verifica que `NUXT_PUBLIC_API_BASE=/api` y accede por el gateway, no por el puerto interno del frontend.
+- Si el frontend no carga notas en Compose, verifica que `NUXT_PUBLIC_API_BASE=/api` y accede por el gateway, no por el puerto interno del frontend. En AWS, sigue la parte 3 para usar API Gateway.
 - Si Compose no espera la migracion, ejecuta `docker compose run --rm migrate` antes de `docker compose up`.
 
 ## Despliegue en AWS Learner Lab
 
-La guia manual y acotada para AWS Learner Lab esta en [DEPLOY_LEARNER_LAB.md](DEPLOY_LEARNER_LAB.md). Para publicar la app detras de un ALB, siga [DEPLOY_LEARNER_LAB_PARTE_2.md](DEPLOY_LEARNER_LAB_PARTE_2.md). La aplicacion se despliega con un unico manifiesto en `k8s/app.yaml`.
+La guia manual y acotada para AWS Learner Lab esta en [DEPLOY_LEARNER_LAB.md](DEPLOY_LEARNER_LAB.md). La parte 2 publica la app detras de un ALB; la [parte 3](DEPLOY_LEARNER_LAB_PARTE_3.md) agrega API Gateway, VPC Link y un ALB interno, y configura el frontend para consumir esa API. La aplicacion se despliega con un unico manifiesto en `k8s/app.yaml`.

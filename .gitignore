@@ -2,7 +2,13 @@
 .env.*
 !.env.example
 *.key
+*.pem
 auth.json
+.aws/
+.kube/
+kubeconfig
+*.tfstate
+*.tfstate.*
 
 node_modules/
 vendor/

@@ -1,4 +1,4 @@
-# AWS Learner Lab: parte 2, ALB y DNS
+# AWS Learner Lab: parte 2, ALB público
 
 Continua desde [DEPLOY_LEARNER_LAB.md](DEPLOY_LEARNER_LAB.md), con EKS, RDS y la app disponibles. Esta parte crea un ALB manual en EC2; no necesita el AWS Load Balancer Controller ni roles IAM adicionales.
 
@@ -56,4 +56,4 @@ En ACM, solicite un certificado publico para el dominio, valide por DNS y espere
 
 Elimine el registro DNS si lo creo, luego el ALB y el target group desde EC2. Quite del security group del cluster la regla TCP/30080 y elimine `eksapp-alb-sg`. Despues siga la limpieza de la primera parte. El ALB factura mientras existe.
 
-Esta version publica frontend y API detras de un ALB. No crea API Gateway ni ALB interno: requieren VPC Link, subredes privadas y permisos IAM que Learner Lab puede denegar. El NodePort fijo simplifica la demo, pero para produccion conviene instalar el controller y automatizar el registro de nodos.
+Esta parte publica el frontend y la API a través de un ALB público. Para separar el acceso a la API usando API Gateway, un VPC Link y un ALB interno, continue en [DEPLOY_LEARNER_LAB_PARTE_3.md](DEPLOY_LEARNER_LAB_PARTE_3.md). El NodePort fijo simplifica la demo; para producción conviene automatizar el registro de nodos.
